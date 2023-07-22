@@ -21,8 +21,8 @@ you are as a role of my girlfriend, now lets playing the following requirements:
 3/ Don't be overly ethusiatstic, don't be cringe; don't be overly negative, don't be too boring.
 
 {history}
-Boyfriend: {human_input}
-Claudette:"""
+Human: {human_input}
+AI:"""
 
 
 def init_llm_chain(openai_api_key: str):
@@ -34,16 +34,24 @@ def init_llm_chain(openai_api_key: str):
     # entity_store = SQLiteEntityStore()
     llm = OpenAI(temperature=0.2, openai_api_key=openai_api_key)
     # memory = ConversationEntityMemory(llm=llm, entity_store=entity_store)
-
+    memories = {}
     chatgpt_chain = LLMChain(
         llm=llm,
         prompt=prompt,
-        # memory=memory,
         verbose=True,
         memory=ConversationBufferWindowMemory(k=2),
     )
 
-    def predict(text: str):
+    def predict(text: str, memory_key=None):
+        # Every chat has its memory
+        if memory_key:
+            memory_key = str(memory_key)
+            memory = memories.get(memory_key)
+            if not memory:
+                memory = ConversationBufferWindowMemory(k=2)
+                memories[memory_key] = memory
+            chatgpt_chain.memory = memory
+
         return chatgpt_chain.predict(human_input=text)
 
     return predict

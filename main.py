@@ -89,7 +89,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.voice:
         text = await voice_to_text(update.message.voice)
 
-    reply = predict(text)
+    reply = predict(text, update.message.chat_id)
 
     await reply_message(update, reply)
 
@@ -98,7 +98,11 @@ def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(MessageHandler(
-        filters=filters.VOICE | filters.TEXT & filters.Regex(r"^(?!\/).*"),
+        filters=(
+            filters.VOICE |
+            filters.TEXT &
+            filters.Regex(r"^(?!\/).*")
+        ),
         callback=message_handler
     ))
 
