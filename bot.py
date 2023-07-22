@@ -1,5 +1,5 @@
 import os
-from telegram import Update
+from telegram import Update, Voice
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 
