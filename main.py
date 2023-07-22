@@ -102,7 +102,7 @@ def main():
             filters.VOICE |
             filters.TEXT &
             filters.Regex(r"^(?!\/).*")
-        ),
+        ) & filters.ChatType.PRIVATE,
         callback=message_handler
     ))
 
