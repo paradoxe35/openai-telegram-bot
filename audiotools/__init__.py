@@ -1,2 +1,4 @@
 from audiotools.witai_speech import witai_transcribe
 from audiotools.openai_speech import openai_transcribe
+from audiotools.witai_synthesize import witai_synthesize
+from audiotools.elevenlabs_synthesize import elevenlabs_synthesize

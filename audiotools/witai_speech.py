@@ -11,7 +11,7 @@ logger = logging.getLogger("speech")
 
 
 class WitTranscriber:
-    speech_url = "https://api.wit.ai/speech"
+    speech_url = "https://api.wit.ai/speech?v=20230215"
 
     def __init__(self, api_key):
         self.session = requests.Session()
