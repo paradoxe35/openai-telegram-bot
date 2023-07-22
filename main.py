@@ -6,6 +6,7 @@ import tempfile
 from telegram import Update, Voice, constants
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 from audiotools import witai_transcribe, openai_transcribe, witai_synthesize, elevenlabs_synthesize
+from chat import init_llm_chain
 
 load_dotenv()
 
@@ -14,8 +15,11 @@ SYNTHESIZE_TYPE = os.environ.get("SYNTHESIZE_TYPE", "elevenlabs")
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 WIT_ACCESS_TOKEN = os.getenv("WIT_ACCESS_TOKEN")
-OPENAI_API_TOKEN = os.getenv("OPENAI_API_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+
+predict = init_llm_chain(OPENAI_API_KEY)
 
 
 # Enable logging
@@ -33,22 +37,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def chunk_text_message(text: str):
-    messages = []
-    message = ""
-    chunks = text.split(" ")
-
-    for chunk in chunks:
-        if len(message) + len(chunk) > 280:
-            messages.append(message)
-            message = ""
-        message += f" {chunk}" if len(message) > 0 else chunk
-
-    messages.append(message)
-
-    return messages
-
-
 async def voice_to_text(voice: Voice):
     text = ""
     file = await voice.get_file()
@@ -60,9 +48,9 @@ async def voice_to_text(voice: Voice):
         if TRANSCRIBER_TYPE != "openai":
             raise Exception("Wit.AI Fallback TRANSCRIBER")
 
-        resutl = openai_transcribe(tmpaudio, OPENAI_API_TOKEN)
+        resutl = openai_transcribe(tmpaudio, OPENAI_API_KEY)
         text += resutl
-    except Exception as e:
+    except Exception as _:
         # Wit AI (as Fallback)
         resutl = witai_transcribe(
             file=tmpaudio,
@@ -85,11 +73,9 @@ async def reply_message(update: Update, text: str):
 
         file = elevenlabs_synthesize(text, ELEVENLABS_API_KEY)
         await update.message.reply_audio(file.file, caption=text)
-    except Exception as e:
-        chuncked_message = chunk_text_message(text)
-        for chunk in chuncked_message:
-            file = witai_synthesize(chunk, WIT_ACCESS_TOKEN)
-            await update.message.reply_audio(file.file, caption=chunk)
+    except Exception as _:
+        file = witai_synthesize(text, WIT_ACCESS_TOKEN)
+        await update.message.reply_audio(file.file, caption=text)
 
     finally:
         if file:
@@ -103,7 +89,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.voice:
         text = await voice_to_text(update.message.voice)
 
-    await reply_message(update, text)
+    reply = predict(text)
+
+    await reply_message(update, reply)
 
 
 def main():

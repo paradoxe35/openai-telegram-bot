@@ -11,7 +11,7 @@ logger = logging.getLogger("synthesize")
 
 
 class WitSynthesizer:
-    speech_url = "https://api.wit.ai/synthesize?v=20230215"
+    speech_url = "https://api.wit.ai/synthesize"
 
     def __init__(self, api_key):
         self.session = requests.Session()
@@ -32,8 +32,8 @@ class WitSynthesizer:
                     "q": text,
                     "voice": "Rosie",
                     "style": "soft",
-                    "speed": 95,
-                    "pitch": 100
+                    "speed": 110,
+                    "pitch": 110
                 }
             )
             content = response.content
@@ -48,13 +48,33 @@ class WitSynthesizer:
         self.session.close()
 
 
+def chunk_text_message(text: str):
+    messages = []
+    message = ""
+    chunks = text.split(" ")
+
+    for chunk in chunks:
+        if len(message) + len(chunk) > 280:
+            messages.append(message)
+            message = ""
+        message += f" {chunk}" if len(message) > 0 else chunk
+
+    messages.append(message)
+
+    return messages
+
+
 def witai_synthesize(text: str, api_key: str):
+    chuncked_message = chunk_text_message(text)
     tmpfile = tempfile.NamedTemporaryFile(suffix=".ogg")
 
     transcriber = WitSynthesizer(api_key)
-    content = transcriber.synthesize(text)
 
-    AudioSegment.from_file(io.BytesIO(content)).export(
+    lists = []
+    for chunk in chuncked_message:
+        lists.append(transcriber.synthesize(chunk))
+
+    AudioSegment.from_file(io.BytesIO(b"".join(lists))).export(
         tmpfile.name, format='ogg')
 
     transcriber.close()
