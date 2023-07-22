@@ -1,11 +1,13 @@
 import io
 import tempfile
-from elevenlabs import generate, play, voices, Voice, VoiceSettings
+from elevenlabs import generate, Voice, VoiceSettings, set_api_key
 
 from pydub import AudioSegment
 
 
 def elevenlabs_synthesize(text: str, api_key: str):
+    set_api_key(api_key)
+
     tmpfile = tempfile.NamedTemporaryFile(suffix=".ogg")
 
     audio = generate(
