@@ -27,6 +27,8 @@ def elevenlabs_synthesize(text: str, api_key: str):
     )
 
     AudioSegment.from_file(io.BytesIO(audio)).export(
-        tmpfile.name, format='ogg')
+        tmpfile.name,
+        format='ogg'
+    )
 
     return tmpfile

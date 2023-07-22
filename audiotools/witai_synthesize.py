@@ -75,7 +75,9 @@ def witai_synthesize(text: str, api_key: str):
         lists.append(transcriber.synthesize(chunk))
 
     AudioSegment.from_file(io.BytesIO(b"".join(lists))).export(
-        tmpfile.name, format='ogg')
+        tmpfile.name,
+        format='ogg'
+    )
 
     transcriber.close()
 
