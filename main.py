@@ -64,7 +64,7 @@ async def voice_to_text(voice: Voice):
     return text
 
 
-async def reply_message(update: Update, text: str):
+async def reply_audio_message(update: Update, text: str):
     file = None
 
     try:
@@ -83,15 +83,20 @@ async def reply_message(update: Update, text: str):
 
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_chat_action(constants.ChatAction.RECORD_VOICE)
     text = update.message.text if update.message.text else ''
 
     if update.message.voice:
+        await update.message.reply_chat_action(constants.ChatAction.RECORD_VOICE)
         text = await voice_to_text(update.message.voice)
+    else:
+        await update.message.reply_chat_action(constants.ChatAction.TYPING)
 
     reply = predict(text, update.message.chat_id)
 
-    await reply_message(update, reply)
+    if update.message.voice:
+        await reply_audio_message(update, reply)
+    else:
+        await update.message.reply_text(reply)
 
 
 def main():
