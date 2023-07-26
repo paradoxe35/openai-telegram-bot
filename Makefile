@@ -16,3 +16,8 @@ requirements: venv
 .PHONY: install
 install: venv
 	pip install -r requirements.txt
+
+
+.PHONY: dev
+dev:
+	.venv/bin/python3 main.py
