@@ -39,7 +39,7 @@ def init_llm_chain(openai_api_key: str):
         llm=llm,
         prompt=prompt,
         verbose=True,
-        memory=ConversationBufferWindowMemory(k=4),
+        memory=ConversationBufferWindowMemory(k=10),
     )
 
     def predict(text: str, memory_key=None):
@@ -48,7 +48,7 @@ def init_llm_chain(openai_api_key: str):
             memory_key = str(memory_key)
             memory = memories.get(memory_key)
             if not memory:
-                memory = ConversationBufferWindowMemory(k=2)
+                memory = ConversationBufferWindowMemory(k=10)
                 memories[memory_key] = memory
             chatgpt_chain.memory = memory
 
