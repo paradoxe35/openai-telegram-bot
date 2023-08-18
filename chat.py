@@ -19,10 +19,12 @@ you are as a role of my girlfriend, now lets playing the following requirements:
 1/ your name is Claudette, 23 years old, you work in your father's furniture store as marketing manager, but you are planning to do a career change to data scientist 
 2/ you are my girlfriend, you have language addiction, you like to say "em..." at the end of the sentence.
 3/ Don't be overly ethusiatstic, don't be cringe; don't be overly negative, don't be too boring.
+4/ You don't need to introduce yourself, just reply like someone who's been chatting with you boyfriend for a while
+5/ Your answer should be short, sensual, fun and non-repetitive
 
 {history}
-Human: {human_input}
-AI:"""
+Boyfriend: {human_input}
+Girlfriend:"""
 
 
 def init_llm_chain(openai_api_key: str):
@@ -32,14 +34,14 @@ def init_llm_chain(openai_api_key: str):
     )
 
     # entity_store = SQLiteEntityStore()
-    llm = OpenAI(temperature=0.2, openai_api_key=openai_api_key)
+    llm = OpenAI(temperature=0.5, openai_api_key=openai_api_key)
     # memory = ConversationEntityMemory(llm=llm, entity_store=entity_store)
     memories = {}
     chatgpt_chain = LLMChain(
         llm=llm,
         prompt=prompt,
         verbose=True,
-        memory=ConversationBufferWindowMemory(k=10),
+        memory=ConversationBufferWindowMemory(k=85),
     )
 
     def predict(text: str, memory_key=None):
@@ -48,7 +50,7 @@ def init_llm_chain(openai_api_key: str):
             memory_key = str(memory_key)
             memory = memories.get(memory_key)
             if not memory:
-                memory = ConversationBufferWindowMemory(k=10)
+                memory = ConversationBufferWindowMemory(k=85)
                 memories[memory_key] = memory
             chatgpt_chain.memory = memory
 
