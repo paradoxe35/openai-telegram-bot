@@ -1,14 +1,9 @@
 import langchain
 
-from langchain.memory import ConversationBufferWindowMemory
-# We can do the same thing with a SQLite cache
 from langchain import OpenAI, LLMChain, PromptTemplate
 from langchain.cache import SQLiteCache
-from langchain.chains import ConversationChain
-# from langchain.llms import OpenAI
-from langchain.memory import ConversationEntityMemory
-from langchain.memory.entity import SQLiteEntityStore
-from langchain.memory.prompt import ENTITY_MEMORY_CONVERSATION_TEMPLATE
+from langchain.memory import RedisChatMessageHistory
+from langchain.memory import ConversationBufferWindowMemory
 
 
 langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
@@ -23,8 +18,8 @@ you are as a role of my girlfriend, now lets playing the following requirements:
 5/ Your answer should be short, sensual, fun and non-repetitive
 
 {history}
-Boyfriend: {human_input}
-Girlfriend:"""
+Human: {human_input}
+AI:"""
 
 
 def init_llm_chain(openai_api_key: str):
@@ -33,15 +28,19 @@ def init_llm_chain(openai_api_key: str):
         template=template
     )
 
-    # entity_store = SQLiteEntityStore()
     llm = OpenAI(temperature=0.5, openai_api_key=openai_api_key)
-    # memory = ConversationEntityMemory(llm=llm, entity_store=entity_store)
+
     memories = {}
+
+    history = RedisChatMessageHistory("default")
     chatgpt_chain = LLMChain(
         llm=llm,
         prompt=prompt,
         verbose=True,
-        memory=ConversationBufferWindowMemory(k=85),
+        memory=ConversationBufferWindowMemory(
+            k=85,
+            chat_memory=history
+        ),
     )
 
     def predict(text: str, memory_key=None):
@@ -50,8 +49,13 @@ def init_llm_chain(openai_api_key: str):
             memory_key = str(memory_key)
             memory = memories.get(memory_key)
             if not memory:
-                memory = ConversationBufferWindowMemory(k=85)
+                memory = ConversationBufferWindowMemory(
+                    k=85,
+                    chat_memory=history
+                )
                 memories[memory_key] = memory
+
+            history.session_id = memory_key
             chatgpt_chain.memory = memory
 
         return chatgpt_chain.predict(human_input=text)

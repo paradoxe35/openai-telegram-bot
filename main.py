@@ -107,11 +107,11 @@ def main():
             filters.VOICE |
             filters.TEXT &
             filters.Regex(r"^(?!\/).*")
-        ) & filters.ChatType.PRIVATE,
+        ),
         callback=message_handler
     ))
 
-    application.run_polling(allowed_updates=[Update.MESSAGE])
+    application.run_polling(allowed_updates=[Update.ALL_TYPES])
 
 
 if __name__ == '__main__':

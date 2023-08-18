@@ -66,6 +66,7 @@ Pygments==2.15.1
 python-dotenv==1.0.0
 python-telegram-bot==20.4
 PyYAML==6.0.1
+redis==5.0.0
 regex==2023.6.3
 requests==2.31.0
 six==1.16.0
