@@ -1,9 +1,9 @@
+import os
 import langchain
 
 from langchain import OpenAI, LLMChain, PromptTemplate
 from langchain.cache import SQLiteCache
-from langchain.memory import RedisChatMessageHistory
-from langchain.memory import ConversationBufferWindowMemory
+from langchain.memory import RedisChatMessageHistory, ConversationBufferWindowMemory, ChatMessageHistory
 
 
 langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
@@ -23,6 +23,8 @@ AI:"""
 
 
 def init_llm_chain(openai_api_key: str):
+    REDIS_URL = os.environ.get("REDIS_URL", None)
+
     prompt = PromptTemplate(
         input_variables=["history", "human_input"],
         template=template
@@ -32,15 +34,19 @@ def init_llm_chain(openai_api_key: str):
 
     memories = {}
 
-    history = RedisChatMessageHistory("default")
+    history = RedisChatMessageHistory(
+        "default") if REDIS_URL else ChatMessageHistory()
+
+    default_memory = ConversationBufferWindowMemory(
+        k=85,
+        chat_memory=history
+    )
+
     chatgpt_chain = LLMChain(
         llm=llm,
         prompt=prompt,
         verbose=True,
-        memory=ConversationBufferWindowMemory(
-            k=85,
-            chat_memory=history
-        ),
+        memory=default_memory,
     )
 
     def predict(text: str, memory_key=None):
@@ -48,15 +54,25 @@ def init_llm_chain(openai_api_key: str):
         if memory_key:
             memory_key = str(memory_key)
             memory = memories.get(memory_key)
+
             if not memory:
                 memory = ConversationBufferWindowMemory(
                     k=85,
-                    chat_memory=history
+                    # If redis not configured then allocate a new memory chat message history
+                    chat_memory=history if REDIS_URL else ChatMessageHistory()
                 )
                 memories[memory_key] = memory
 
-            history.session_id = memory_key
+            if hasattr(history, 'session_id'):
+                history.session_id = memory_key
+
             chatgpt_chain.memory = memory
+
+        else:
+            if hasattr(history, 'session_id'):
+                history.session_id = "default"
+
+            chatgpt_chain.memory = default_memory
 
         return chatgpt_chain.predict(human_input=text)
 
