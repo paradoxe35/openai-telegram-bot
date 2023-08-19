@@ -30,7 +30,10 @@ def init_llm_chain(openai_api_key: str):
         template=template
     )
 
-    llm = OpenAI(temperature=0.5, openai_api_key=openai_api_key)
+    llm = OpenAI(
+        temperature=0.5,
+        openai_api_key=openai_api_key
+    )
 
     memories = {}
 
@@ -38,7 +41,7 @@ def init_llm_chain(openai_api_key: str):
         "default") if REDIS_URL else ChatMessageHistory()
 
     default_memory = ConversationBufferWindowMemory(
-        k=85,
+        k=200,
         chat_memory=history
     )
 
@@ -57,7 +60,7 @@ def init_llm_chain(openai_api_key: str):
 
             if not memory:
                 memory = ConversationBufferWindowMemory(
-                    k=85,
+                    k=200,
                     # If redis not configured then allocate a new memory chat message history
                     chat_memory=history if REDIS_URL else ChatMessageHistory()
                 )
