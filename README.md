@@ -52,5 +52,5 @@ To configure the bot, you'll need to set the following environment variables:
 
 ## Customization
 
-You can customize the bot's behavior and responses by modifying the code in the `bot.py` file. Experiment with different conversation patterns, personalities, and responses to create your ideal virtual girlfriend.
+You can customize the bot's behavior and responses by modifying the code in the `main.py` and `chat.py` file. Experiment with different conversation patterns, personalities, and responses to create your ideal virtual girlfriend.
 
