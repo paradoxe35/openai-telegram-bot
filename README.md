@@ -42,7 +42,13 @@ To configure the bot, you'll need to set the following environment variables:
 
 - `TELEGRAM_BOT_TOKEN`: Your Telegram Bot API token.
 - `OPENAI_API_KEY`: Your OpenAI API key.
-- [Add any other relevant configuration options]
+- `WIT_ACCESS_TOKEN`: Your Wit AI API key.
+- `ELEVENLABS_API_KEY`: Your Elevenlabs API key.
+- `TRANSCRIBER_TYPE`: openai | witai
+- `SYNTHESIZE_TYPE`: elevenlabs | witai
+
+### OpenAI Memory
+- `REDIS_URL="redis://localhost:6379/0"`
 
 ## Customization
 
