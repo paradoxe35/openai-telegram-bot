@@ -31,7 +31,7 @@ Follow these steps to get the Girlfriend OpenAI Telegram Bot up and running:
 4. Start the bot:
 
    ```shell
-   python bot.py
+   python main.py
    ```
 
 5. Open your Telegram app and start a conversation with your bot.
