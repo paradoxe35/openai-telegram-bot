@@ -1,9 +1,14 @@
 import os
 import langchain
 
-from langchain import OpenAI, LLMChain, PromptTemplate
+from langchain import LLMChain, PromptTemplate
+from langchain.chat_models import ChatOpenAI
 from langchain.cache import SQLiteCache
-from langchain.memory import RedisChatMessageHistory, ConversationBufferWindowMemory, ChatMessageHistory
+from langchain.memory import (
+    RedisChatMessageHistory,
+    ConversationBufferWindowMemory,
+    ChatMessageHistory,
+)
 
 
 langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
@@ -22,28 +27,24 @@ Human: {human_input}
 AI:"""
 
 
-def init_llm_chain(openai_api_key: str):
+def init_llm_chain(openai_api_key: str, model_name=str | None):
     REDIS_URL = os.environ.get("REDIS_URL", None)
 
     prompt = PromptTemplate(
-        input_variables=["history", "human_input"],
-        template=template
+        input_variables=["history", "human_input"], template=template
     )
 
-    llm = OpenAI(
-        temperature=0.5,
-        openai_api_key=openai_api_key
+    llm = ChatOpenAI(
+        model_name=model_name,
+        temperature=0.8,
+        openai_api_key=openai_api_key,
     )
 
     memories = {}
 
-    history = RedisChatMessageHistory(
-        "default") if REDIS_URL else ChatMessageHistory()
+    history = RedisChatMessageHistory("default") if REDIS_URL else ChatMessageHistory()
 
-    default_memory = ConversationBufferWindowMemory(
-        k=200,
-        chat_memory=history
-    )
+    default_memory = ConversationBufferWindowMemory(k=200, chat_memory=history)
 
     chatgpt_chain = LLMChain(
         llm=llm,
@@ -62,17 +63,17 @@ def init_llm_chain(openai_api_key: str):
                 memory = ConversationBufferWindowMemory(
                     k=200,
                     # If redis not configured then allocate a new memory chat message history
-                    chat_memory=history if REDIS_URL else ChatMessageHistory()
+                    chat_memory=history if REDIS_URL else ChatMessageHistory(),
                 )
                 memories[memory_key] = memory
 
-            if hasattr(history, 'session_id'):
+            if hasattr(history, "session_id"):
                 history.session_id = memory_key
 
             chatgpt_chain.memory = memory
 
         else:
-            if hasattr(history, 'session_id'):
+            if hasattr(history, "session_id"):
                 history.session_id = "default"
 
             chatgpt_chain.memory = default_memory

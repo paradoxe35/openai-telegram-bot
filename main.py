@@ -5,13 +5,19 @@ from dotenv import load_dotenv
 import tempfile
 from telegram import Update, Voice, constants
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
-from audiotools import witai_transcribe, openai_transcribe, witai_synthesize, elevenlabs_synthesize
+from audiotools import (
+    witai_transcribe,
+    openai_transcribe,
+    witai_synthesize,
+    elevenlabs_synthesize,
+)
 from chat import init_llm_chain
 
 load_dotenv()
 
 TRANSCRIBER_TYPE = os.environ.get("TRANSCRIBER_TYPE", "openai")
 SYNTHESIZE_TYPE = os.environ.get("SYNTHESIZE_TYPE", "elevenlabs")
+CHATGPT_API_MODEL = os.environ.get("CHATGPT_API_MODEL", None)
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 WIT_ACCESS_TOKEN = os.getenv("WIT_ACCESS_TOKEN")
@@ -19,7 +25,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 
-predict = init_llm_chain(OPENAI_API_KEY)
+predict = init_llm_chain(
+    openai_api_key=OPENAI_API_KEY,
+    model_name=CHATGPT_API_MODEL,
+)
 
 
 # Enable logging
@@ -52,10 +61,7 @@ async def voice_to_text(voice: Voice):
         text += resutl
     except Exception as _:
         # Wit AI (as Fallback)
-        resutl = witai_transcribe(
-            file=tmpaudio,
-            api_key=WIT_ACCESS_TOKEN
-        )
+        resutl = witai_transcribe(file=tmpaudio, api_key=WIT_ACCESS_TOKEN)
         for speech in resutl:
             text += speech
     finally:
@@ -83,7 +89,7 @@ async def reply_audio_message(update: Update, text: str):
 
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text if update.message.text else ''
+    text = update.message.text if update.message.text else ""
 
     if update.message.voice:
         await update.message.reply_chat_action(constants.ChatAction.RECORD_VOICE)
@@ -102,18 +108,17 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    application.add_handler(MessageHandler(
-        filters=(
-            filters.VOICE |
-            filters.TEXT &
-            filters.Regex(r"^(?!\/).*")
-        ) & filters.ChatType.PRIVATE,
-        callback=message_handler
-    ))
+    application.add_handler(
+        MessageHandler(
+            filters=(filters.VOICE | filters.TEXT & filters.Regex(r"^(?!\/).*"))
+            & filters.ChatType.PRIVATE,
+            callback=message_handler,
+        )
+    )
 
     application.run_polling(allowed_updates=[Update.MESSAGE])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("Application started")
     main()
