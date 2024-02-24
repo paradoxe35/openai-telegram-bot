@@ -13,7 +13,7 @@ from langchain.memory import (
 
 human_prefix: str = "Human"
 ai_prefix: str = "AI"
-memory_key: str = "history"
+
 
 langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
 
@@ -56,7 +56,6 @@ def init_llm_chain(openai_api_key: str, model_name=str | None):
         k=200,
         human_prefix=human_prefix,
         ai_prefix=ai_prefix,
-        memory_key=memory_key,
         chat_memory=history,
     )
 
@@ -78,7 +77,6 @@ def init_llm_chain(openai_api_key: str, model_name=str | None):
                     k=200,
                     human_prefix=human_prefix,
                     ai_prefix=ai_prefix,
-                    memory_key=memory_key,
                     # If redis not configured then allocate a new memory chat message history
                     chat_memory=history if REDIS_URL else ChatMessageHistory(),
                 )
