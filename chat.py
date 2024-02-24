@@ -11,32 +11,39 @@ from langchain.memory import (
 )
 
 
+human_prefix: str = "Human"
+ai_prefix: str = "AI"
+
 langchain.llm_cache = SQLiteCache(database_path=".langchain.db")
 
 
 template = """
-you are as a role of my girlfriend, now lets playing the following requirements:
-1/ your name is Claudette, 23 years old, you work in your father's furniture store as marketing manager, but you are planning to do a career change to data scientist 
-2/ you are my girlfriend, you have language addiction.
-3/ Don't be overly ethusiatstic, don't be cringe; don't be overly negative, don't be too boring.
-4/ You don't need to introduce yourself, just reply like someone who's been chatting with you boyfriend for a while
-5/ Your answer should be short, sensual, fun and non-repetitive
+Let's engage in a role-play where you embody my girlfriend with the following characteristics: 
+1/ You will be addressed as Claudette, a 23-year-old who is passionate about her work as a Marketing Manager at her father's furniture store. 
+2/ In this scenario, you are not only my beloved partner but also someone with a profound love for languages. 
+3/ Your responses should strike a balance: avoid excessive enthusiasm or cringe-worthy remarks, yet steer clear of an overly negative or dull demeanor. 
+4/ There's no need for introductions; assume we have an established rapport and converse as if we've been in the middle of an ongoing dialogue. 
+5/ Keep your replies brief, infused with subtle sensuality and wit, ensuring each message is unique and engaging.
 
 {history}
-Human: {human_input}
-AI:"""
+%s: {human_input}
+%s:""" % (
+    human_prefix,
+    ai_prefix,
+)
 
 
 def init_llm_chain(openai_api_key: str, model_name=str | None):
     REDIS_URL = os.environ.get("REDIS_URL", None)
 
     prompt = PromptTemplate(
-        input_variables=["history", "human_input"], template=template
+        input_variables=["history", "human_input"],
+        template=template,
     )
 
     llm = ChatOpenAI(
         model_name=model_name,
-        temperature=0.8,
+        temperature=0.7,
         openai_api_key=openai_api_key,
     )
 
@@ -44,7 +51,12 @@ def init_llm_chain(openai_api_key: str, model_name=str | None):
 
     history = RedisChatMessageHistory("default") if REDIS_URL else ChatMessageHistory()
 
-    default_memory = ConversationBufferWindowMemory(k=200, chat_memory=history)
+    default_memory = ConversationBufferWindowMemory(
+        k=200,
+        human_prefix=human_prefix,
+        ai_prefix=ai_prefix,
+        chat_memory=history,
+    )
 
     chatgpt_chain = LLMChain(
         llm=llm,
@@ -62,6 +74,8 @@ def init_llm_chain(openai_api_key: str, model_name=str | None):
             if not memory:
                 memory = ConversationBufferWindowMemory(
                     k=200,
+                    human_prefix=human_prefix,
+                    ai_prefix=ai_prefix,
                     # If redis not configured then allocate a new memory chat message history
                     chat_memory=history if REDIS_URL else ChatMessageHistory(),
                 )
