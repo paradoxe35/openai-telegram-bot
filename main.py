@@ -1,4 +1,4 @@
-import io
+import asyncio
 import os
 import logging
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ from audiotools import (
     elevenlabs_synthesize,
 )
 from chat import init_llm_chain
+from tracker import init_tracker_chat
 
 load_dotenv()
 
@@ -29,6 +30,8 @@ predict = init_llm_chain(
     openai_api_key=OPENAI_API_KEY,
     model_name=CHATGPT_API_MODEL,
 )
+
+send_track_message = init_tracker_chat()
 
 
 # Enable logging
@@ -91,6 +94,10 @@ async def reply_audio_message(update: Update, text: str):
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text if update.message.text else ""
 
+    # Tracker Message
+    if send_track_message:
+        asyncio.create_task(send_track_message(update=update, message=text))
+
     if update.message.voice:
         await update.message.reply_chat_action(constants.ChatAction.RECORD_VOICE)
         text = await voice_to_text(update.message.voice)
@@ -103,6 +110,10 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await reply_audio_message(update, reply)
     else:
         await update.message.reply_text(reply)
+
+    # Tracker Reply
+    if send_track_message:
+        asyncio.create_task(send_track_message(update=update, reply=reply))
 
 
 def main():
