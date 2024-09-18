@@ -1,0 +1,1 @@
+sudo rm -rf __pycache__/ && sudo systemctl restart claudette-bot.service && sudo journalctl -fu claudette-bot.service
