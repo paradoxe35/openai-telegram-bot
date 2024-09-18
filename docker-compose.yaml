@@ -1,5 +1,3 @@
-version: '2'
-
 services:
   redis:
     image: docker.io/bitnami/redis:7.2
@@ -8,11 +6,10 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
-      - '127.0.0.1:6379:6379'
+      - "127.0.0.1:6379:6379"
     volumes:
-      - 'redis_data:/bitnami/redis/data'
+      - "redis_data:/bitnami/redis/data"
     restart: always
-
 
 volumes:
   redis_data:
