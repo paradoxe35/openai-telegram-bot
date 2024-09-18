@@ -1,8 +1,10 @@
 import asyncio
 import os
 import logging
-from dotenv import load_dotenv
 import tempfile
+
+from chatgpt_md_converter import telegram_format
+from dotenv import load_dotenv
 from telegram import Update, Voice, constants
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 from audiotools import (
@@ -52,23 +54,23 @@ logger = logging.getLogger(__name__)
 async def voice_to_text(voice: Voice):
     text = ""
     file = await voice.get_file()
-    tmpaudio = tempfile.NamedTemporaryFile(suffix=".ogg")
-    await file.download_to_drive(tmpaudio.name)
+    tmp_audio = tempfile.NamedTemporaryFile(suffix=".ogg")
+    await file.download_to_drive(tmp_audio.name)
 
     # Transcribe
     try:
         if TRANSCRIBER_TYPE != "openai":
             raise Exception("Wit.AI Fallback TRANSCRIBER")
 
-        resutl = openai_transcribe(tmpaudio, OPENAI_API_KEY)
-        text += resutl
+        result = openai_transcribe(tmp_audio, OPENAI_API_KEY)
+        text += result
     except Exception as _:
         # Wit AI (as Fallback)
-        resutl = witai_transcribe(file=tmpaudio, api_key=WIT_ACCESS_TOKEN)
-        for speech in resutl:
+        result = witai_transcribe(file=tmp_audio, api_key=WIT_ACCESS_TOKEN)
+        for speech in result:
             text += speech
     finally:
-        tmpaudio.close()
+        tmp_audio.close()
 
     return text
 
@@ -105,11 +107,15 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_chat_action(constants.ChatAction.TYPING)
 
     reply = predict(text, update.message.chat_id)
+    formattedReply = telegram_format(reply)
 
     if update.message.voice:
         await reply_audio_message(update, reply)
     else:
-        await update.message.reply_text(reply)
+        await update.message.reply_text(
+            formattedReply,
+            parse_mode=constants.ParseMode.HTML,
+        )
 
     # Tracker Reply
     if send_track_message:
